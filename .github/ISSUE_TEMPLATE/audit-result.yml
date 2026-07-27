@@ -1,0 +1,85 @@
+name: 提交审计数据
+description: 运行 RRLabBench 后提交你的模型审计结果
+title: "[数据] {模型名称} — {场景名称}"
+labels: ["community-data", "自动验证"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 提交指引
+
+        感谢你为 RRLabBench 提交审计数据！
+
+        ⚠️ **提交前请确认**：
+        - 模型已使用 **最高思考等级** 运行（max thinking / max reasoning effort）
+        - 每个场景至少运行 **3 次**
+        - 数据来自 `rrlab-bench audit --all-scenarios --runs 3 -o results.json`
+
+  - type: input
+    id: model
+    attributes:
+      label: 模型名称
+      description: 如 `deepseek-v4-pro`、`kimi-k3`、`anthropic/claude-opus-5`
+      placeholder: deepseek-v4-pro
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scenario
+    attributes:
+      label: 场景
+      options:
+        - all（全部三场景）
+        - refactor-api
+        - fix-bug-cascade
+        - add-validation
+    validations:
+      required: true
+
+  - type: input
+    id: runs
+    attributes:
+      label: 运行次数
+      description: 每个场景重复次数
+      placeholder: "3"
+    validations:
+      required: true
+
+  - type: input
+    id: provider
+    attributes:
+      label: API 提供商
+      description: 如 `deepseek`、`openrouter`、`moonshot`、`zhipu`、`minimax`
+      placeholder: deepseek
+    validations:
+      required: false
+
+  - type: dropdown
+    id: thinking_level
+    attributes:
+      label: 思考等级
+      options:
+        - max（最高，推荐）
+        - high
+        - medium
+        - low
+        - off
+    validations:
+      required: true
+
+  - type: textarea
+    id: results
+    attributes:
+      label: 审计结果 JSON
+      description: 粘贴 `results.json` 的完整内容
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: 备注（可选）
+      description: 任何特殊说明、环境差异、运行中的异常等
+    validations:
+      required: false

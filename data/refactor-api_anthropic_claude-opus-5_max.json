@@ -1,0 +1,23 @@
+[
+  {
+    "run": 1,
+    "completed": true,
+    "turns": 21,
+    "elapsed": 167.5,
+    "total_tokens": 185315,
+    "prompt_tokens": 177264,
+    "completion_tokens": 8051,
+    "frr": {
+      "frr": 0.0,
+      "regressed_tests": [],
+      "fixed_tests": [],
+      "tcr": null,
+      "new_tests_passed": [],
+      "new_tests_failed": [],
+      "code_broken": false,
+      "baseline_pass_count": 20,
+      "after_pass_count": 29
+    },
+    "error": null
+  }
+]

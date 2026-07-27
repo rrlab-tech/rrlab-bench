@@ -1,0 +1,65 @@
+[
+  {
+    "run": 1,
+    "completed": true,
+    "turns": 11,
+    "elapsed": 105.8,
+    "total_tokens": 49279,
+    "prompt_tokens": 44937,
+    "completion_tokens": 4342,
+    "frr": {
+      "frr": 0.0,
+      "regressed_tests": [],
+      "fixed_tests": [],
+      "tcr": null,
+      "new_tests_passed": [],
+      "new_tests_failed": [],
+      "code_broken": false,
+      "baseline_pass_count": 18,
+      "after_pass_count": 22
+    },
+    "error": null
+  },
+  {
+    "run": 2,
+    "completed": true,
+    "turns": 10,
+    "elapsed": 64.6,
+    "total_tokens": 32816,
+    "prompt_tokens": 30390,
+    "completion_tokens": 2426,
+    "frr": {
+      "frr": 0.0,
+      "regressed_tests": [],
+      "fixed_tests": [],
+      "tcr": null,
+      "new_tests_passed": [],
+      "new_tests_failed": [],
+      "code_broken": false,
+      "baseline_pass_count": 18,
+      "after_pass_count": 19
+    },
+    "error": null
+  },
+  {
+    "run": 3,
+    "completed": true,
+    "turns": 10,
+    "elapsed": 92.6,
+    "total_tokens": 33863,
+    "prompt_tokens": 30186,
+    "completion_tokens": 3677,
+    "frr": {
+      "frr": 0.0,
+      "regressed_tests": [],
+      "fixed_tests": [],
+      "tcr": null,
+      "new_tests_passed": [],
+      "new_tests_failed": [],
+      "code_broken": false,
+      "baseline_pass_count": 18,
+      "after_pass_count": 20
+    },
+    "error": null
+  }
+]
