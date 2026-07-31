@@ -63,6 +63,8 @@ DEFAULT_MODELS = [
     {"name": "x-ai/grok-4.5",     "key_env": "OPENROUTER_API_KEY",   "url": "https://openrouter.ai/api/v1"},
     {"name": "anthropic/claude-opus-5",   "key_env": "OPENROUTER_API_KEY", "url": "https://openrouter.ai/api/v1"},
     {"name": "anthropic/claude-opus-4.8", "key_env": "OPENROUTER_API_KEY", "url": "https://openrouter.ai/api/v1"},
+    {"name": "openai/gpt-5.6-luna",  "key_env": "OPENROUTER_API_KEY", "url": "https://openrouter.ai/api/v1"},
+    {"name": "openai/gpt-5.6-luna-pro",  "key_env": "OPENROUTER_API_KEY", "url": "https://openrouter.ai/api/v1"},
 ]
 
 

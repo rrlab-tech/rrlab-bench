@@ -55,7 +55,8 @@ PRICING = {
     "MiniMax-M3":        {"input": 2.18, "output": 8.7},
     "x-ai/grok-4.5":     {"input": 14.5, "output": 43.5},
     "anthropic/claude-opus-5":   {"input": 36.25, "output": 181.25},
-    "anthropic/claude-opus-4.8": {"input": 36.25, "output": 181.25},
+    "anthropic/claude-opus-5_max": {"input": 36.25, "output": 181.25},
+    "openai/gpt-5.6-luna":         {"input": 0.73, "output": 4.38},  # $0.10/$0.60 50% off
 }
 
 
@@ -75,7 +76,7 @@ def _resolve_model_config(model: str, api_key: str = None, base_url: str = None)
     elif "glm" in model.lower() or "zhipu" in model.lower():
         url = "https://open.bigmodel.cn/api/paas/v4"
     elif "kimi" in model.lower():
-        url = "https://api.moonshot.cn/v1"
+        url = "https://api.kimi.com/coding"
     elif "/" in model:
         url = "https://openrouter.ai/api/v1"
     else:
@@ -86,18 +87,42 @@ def _resolve_model_config(model: str, api_key: str = None, base_url: str = None)
     elif "glm" in model.lower() or "zhipu" in model.lower():
         key = os.environ.get("ZHIPU_API_KEY")
     elif "kimi" in model.lower():
-        key = os.environ.get("MOONSHOT_API_KEY") or os.environ.get("KIMI_API_KEY")
+        key = os.environ.get("KIMI_API_KEY") or os.environ.get("MOONSHOT_API_KEY")
     elif "/" in model:
         key = os.environ.get("OPENROUTER_API_KEY")
     else:
         key = os.environ.get("DEEPSEEK_API_KEY")
 
+    # Fallback: 从 Pi auth.json 读取
+    if not key:
+        auth_path = Path.home() / ".pi" / "agent" / "auth.json"
+        if auth_path.exists():
+            try:
+                auth = json.loads(auth_path.read_text())
+                provider_map = {"kimi": "kimi-coding", "deepseek": "deepseek",
+                                "glm": "zai", "zhipu": "zai",
+                                "openrouter": "openrouter", "minimax": "minimax-cn"}
+                pname = None
+                if "kimi" in model.lower():
+                    pname = "kimi-coding"
+                elif "glm" in model.lower() or "zhipu" in model.lower():
+                    pname = "zai"
+                elif "/" in model:
+                    pname = "openrouter"
+                else:
+                    pname = "deepseek"
+                if pname and pname in auth:
+                    key = auth[pname].get("key") or auth[pname].get("api_key")
+            except Exception:
+                pass
+
     if not key:
         print("Error: No API key found. Set one of these environment variables:")
         print("  DeepSeek:   DEEPSEEK_API_KEY")
-        print("  Kimi:       MOONSHOT_API_KEY or KIMI_API_KEY")
+        print("  Kimi:       KIMI_API_KEY or MOONSHOT_API_KEY")
         print("  GLM:        ZHIPU_API_KEY")
         print("  OpenRouter: OPENROUTER_API_KEY")
+        print("Or ensure ~/.pi/agent/auth.json exists with the corresponding provider key.")
         sys.exit(1)
 
     return key, url
@@ -423,7 +448,7 @@ def main():
 
 Environment variables:
   DEEPSEEK_API_KEY    DeepSeek API key
-  MOONSHOT_API_KEY    Kimi API key (or KIMI_API_KEY)
+  KIMI_API_KEY    Kimi API key (or MOONSHOT_API_KEY)
   OPENROUTER_API_KEY  OpenRouter API key (for Claude, GLM, etc.)
 """,
     )
@@ -434,7 +459,7 @@ Environment variables:
     ap.add_argument("--scenario", default="refactor-api",
                     help=f"Scenario: {', '.join(SCENARIOS)}")
     ap.add_argument("--all-scenarios", action="store_true", help="Run all scenarios")
-    ap.add_argument("--model", default="deepseek-v4-pro", help="Model ID")
+    ap.add_argument("--model", default="kimi-k3", help="Model ID")
     ap.add_argument("--api-key", help="API key (optional, reads from env)")
     ap.add_argument("--base-url", help="API base URL (auto-detected)")
     ap.add_argument("--runs", type=int, default=5, help="Repeat count (default: 5)")
@@ -453,7 +478,7 @@ Environment variables:
     rp.add_argument("--scenario", default="refactor-api",
                     help=f"Scenario: {', '.join(SCENARIOS)}")
     rp.add_argument("--all-scenarios", action="store_true", help="Run all scenarios")
-    rp.add_argument("--model", default="deepseek-v4-pro", help="Model ID")
+    rp.add_argument("--model", default="kimi-k3", help="Model ID")
     rp.add_argument("--api-key", help="API key")
     rp.add_argument("--base-url", help="API base URL")
     rp.add_argument("--runs", type=int, default=3, help="Repeat count (default: 3)")
@@ -464,7 +489,7 @@ Environment variables:
     pp = subparsers.add_parser("probe", help="Run harness rule probes (Bench-Harness v0.1)")
     pp.add_argument("--probe", help="Single probe JSON file (default: all in probes/)")
     pp.add_argument("--probes-dir", default="probes", help="Probes directory (default: probes/)")
-    pp.add_argument("--model", default="deepseek-v4-pro", help="Model ID")
+    pp.add_argument("--model", default="kimi-k3", help="Model ID")
     pp.add_argument("--api-key", help="API key")
     pp.add_argument("--base-url", help="API base URL")
     pp.add_argument("--harness", help="Harness rules file (e.g. AGENTS.md) — omit for baseline")
