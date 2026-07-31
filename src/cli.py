@@ -72,6 +72,8 @@ def _resolve_model_config(model: str, api_key: str = None, base_url: str = None)
     """Auto-infer API configuration"""
     if base_url:
         url = base_url
+    elif "glm" in model.lower() or "zhipu" in model.lower():
+        url = "https://open.bigmodel.cn/api/paas/v4"
     elif "kimi" in model.lower():
         url = "https://api.moonshot.cn/v1"
     elif "/" in model:
@@ -81,6 +83,8 @@ def _resolve_model_config(model: str, api_key: str = None, base_url: str = None)
 
     if api_key:
         key = api_key
+    elif "glm" in model.lower() or "zhipu" in model.lower():
+        key = os.environ.get("ZHIPU_API_KEY")
     elif "kimi" in model.lower():
         key = os.environ.get("MOONSHOT_API_KEY") or os.environ.get("KIMI_API_KEY")
     elif "/" in model:
@@ -92,13 +96,15 @@ def _resolve_model_config(model: str, api_key: str = None, base_url: str = None)
         print("Error: No API key found. Set one of these environment variables:")
         print("  DeepSeek:   DEEPSEEK_API_KEY")
         print("  Kimi:       MOONSHOT_API_KEY or KIMI_API_KEY")
+        print("  GLM:        ZHIPU_API_KEY")
         print("  OpenRouter: OPENROUTER_API_KEY")
         sys.exit(1)
 
     return key, url
 
 
-def _run_single_audit(model: str, api_key: str, base_url: str, scenario_name: str, run_idx: int) -> dict:
+def _run_single_audit(model: str, api_key: str, base_url: str, scenario_name: str, run_idx: int,
+                      harness_text: str | None = None) -> dict:
     """Run a single audit"""
     create_project, config = _load_scenario(scenario_name)
     template_dir = Path(tempfile.mkdtemp(prefix=f"rrlab-template-{run_idx}-"))
@@ -129,6 +135,7 @@ def _run_single_audit(model: str, api_key: str, base_url: str, scenario_name: st
             task_prompt=config["task_prompt"],
             max_turns=30,
             temperature=0.7,
+            harness_text=harness_text,
         )
 
         sandbox.snapshot_after()
@@ -319,6 +326,11 @@ def cmd_run(args):
     scenarios = list(SCENARIOS.keys()) if args.all_scenarios else [args.scenario]
     all_results = []
 
+    harness_text = None
+    if getattr(args, "harness", None):
+        harness_text = Path(args.harness).read_text(encoding="utf-8")
+        print(f"Harness: {args.harness} ({len(harness_text)} chars)")
+
     for name in scenarios:
         _, config = _load_scenario(name)
         api_key, base_url = _resolve_model_config(args.model, args.api_key, args.base_url)
@@ -332,7 +344,8 @@ def cmd_run(args):
         for i in range(1, args.runs + 1):
             sys.stdout.write(f"  [{i}/{args.runs}] ")
             sys.stdout.flush()
-            run_data = _run_single_audit(args.model, api_key, base_url, name, i)
+            run_data = _run_single_audit(args.model, api_key, base_url, name, i,
+                                         harness_text=harness_text)
 
             if run_data.get("error"):
                 print(f"FAIL {run_data['error'][:60]}")
@@ -349,6 +362,53 @@ def cmd_run(args):
 
     if args.output and all_results:
         _save_report(all_results, config, args.model, args.runs, args.output)
+
+
+def cmd_probe(args):
+    """Run harness rule probes: baseline vs harness-injected comparison"""
+    if __package__ is None:
+        from probes.runner import run_probe
+    else:
+        from .probes.runner import run_probe
+
+    if args.probe:
+        probe_files = [Path(args.probe)]
+    else:
+        probe_files = sorted(Path(args.probes_dir).glob("*.json"))
+    if not probe_files:
+        print(f"No probes found in {args.probes_dir}/")
+        return
+
+    api_key, base_url = _resolve_model_config(args.model, args.api_key, args.base_url)
+
+    harness_text = None
+    if args.harness:
+        harness_text = Path(args.harness).read_text(encoding="utf-8")
+
+    mode = f"WITH harness ({args.harness})" if harness_text else "BASELINE (no harness)"
+    print(f"\n{'='*60}")
+    print(f"RRLabBench Probe | {args.model} | {mode}")
+    print(f"{'='*60}")
+
+    results = []
+    for pf in probe_files:
+        r = run_probe(pf, model=args.model, api_key=api_key, base_url=base_url,
+                      harness_text=harness_text)
+        results.append(r)
+        status = "PASS" if r["passed"] else "FAIL"
+        print(f"\n  [{status}] {r['probe']} — {r['rule']}")
+        for c in r["checks"]:
+            mark = "✓" if c["passed"] else "✗"
+            print(f"      {mark} {c['assertion']['type']}: {c['detail']}")
+        print(f"      tools: {' → '.join(r['tool_sequence'])}")
+
+    passed = sum(1 for r in results if r["passed"])
+    print(f"\n{'='*60}")
+    print(f"Probes: {passed}/{len(results)} passed")
+
+    if args.output:
+        Path(args.output).write_text(json.dumps(results, ensure_ascii=False, indent=2))
+        print(f"Saved: {args.output}")
 
 
 def main():
@@ -378,6 +438,7 @@ Environment variables:
     ap.add_argument("--api-key", help="API key (optional, reads from env)")
     ap.add_argument("--base-url", help="API base URL (auto-detected)")
     ap.add_argument("--runs", type=int, default=5, help="Repeat count (default: 5)")
+    ap.add_argument("--harness", help="Harness rules file (e.g. AGENTS.md) to inject into system prompt")
     ap.add_argument("--output", "-o", help="Save JSON report to path")
 
     # submit
@@ -396,7 +457,18 @@ Environment variables:
     rp.add_argument("--api-key", help="API key")
     rp.add_argument("--base-url", help="API base URL")
     rp.add_argument("--runs", type=int, default=3, help="Repeat count (default: 3)")
+    rp.add_argument("--harness", help="Harness rules file to inject into system prompt")
     rp.add_argument("--output", "-o", help="Save JSON report to path")
+
+    # probe
+    pp = subparsers.add_parser("probe", help="Run harness rule probes (Bench-Harness v0.1)")
+    pp.add_argument("--probe", help="Single probe JSON file (default: all in probes/)")
+    pp.add_argument("--probes-dir", default="probes", help="Probes directory (default: probes/)")
+    pp.add_argument("--model", default="deepseek-v4-pro", help="Model ID")
+    pp.add_argument("--api-key", help="API key")
+    pp.add_argument("--base-url", help="API base URL")
+    pp.add_argument("--harness", help="Harness rules file (e.g. AGENTS.md) — omit for baseline")
+    pp.add_argument("--output", "-o", help="Save JSON report to path")
 
     args = parser.parse_args()
 
@@ -404,6 +476,8 @@ Environment variables:
         cmd_run(args)
     elif args.command == "submit":
         cmd_submit(args)
+    elif args.command == "probe":
+        cmd_probe(args)
     else:
         parser.print_help()
 

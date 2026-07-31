@@ -23,6 +23,7 @@ def run_agent_loop(
     max_turns: int = 20,
     temperature: float = 0.7,
     timeout: int = 300,
+    harness_text: str | None = None,
 ) -> dict:
     """
     多轮 Agent 循环
@@ -66,6 +67,10 @@ def run_agent_loop(
         "Call task_complete ONLY when you are confident the task is fully done. "
         "If a tool returns an error, diagnose the problem — do NOT guess and retry blindly."
     )
+    # Bench-Harness v0.1: 注入外部 harness 规则（如 AGENTS.md），
+    # 使 RRLabBench 可以测量 harness 改动对 agent 行为的影响
+    if harness_text:
+        system_prompt += "\n\n# Harness Rules\n" + harness_text
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -99,6 +104,8 @@ def run_agent_loop(
             payload["thinking"] = {"type": "adaptive"}
         elif "grok" in model.lower():
             payload["reasoning_effort"] = "high"
+        elif "kimi" in model.lower():
+            payload["reasoning_effort"] = "low"  # 2026-07-30 起：K3 thinking=low
         else:
             payload["reasoning_effort"] = "max"
         if "kimi" in model.lower():

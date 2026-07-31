@@ -1,8 +1,11 @@
 # 优先序（v0.1 → v1.0）
 
+> **并行方向**：Bench-Harness（测/进化 Harness 而非模型）已立项存档，见 [bench-harness-v0.1.md](bench-harness-v0.1.md)。中长期跟踪，独立于本 roadmap 推进。
+
 ## Phase 0: 方法论白皮书（当前 — 2 周）
 
 - [ ] 完成方法论白皮书
+- [ ] **白皮书发布前：GLM 5.2 用智谱官方直连重跑**（2026-07-28 起 cli.py/run_bench.py 已切换；REPORT.md 中现有 GLM 数据走 OpenRouter 中转，成本/耗时口径不一致，正式引用前需重测）
 - [ ] 用 eVoiceClawBenchmark 现有数据做一次匿名化行业分布分析
 - [ ] 作为第一篇公开文章发布
 

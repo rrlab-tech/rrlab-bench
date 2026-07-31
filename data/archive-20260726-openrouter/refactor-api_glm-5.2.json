@@ -2,11 +2,11 @@
   {
     "run": 1,
     "completed": true,
-    "turns": 7,
-    "elapsed": 52.9,
-    "total_tokens": 14106,
-    "prompt_tokens": 13063,
-    "completion_tokens": 1043,
+    "turns": 13,
+    "elapsed": 83.9,
+    "total_tokens": 53282,
+    "prompt_tokens": 50331,
+    "completion_tokens": 2951,
     "frr": {
       "frr": 0.0,
       "regressed_tests": [],
@@ -15,19 +15,19 @@
       "new_tests_passed": [],
       "new_tests_failed": [],
       "code_broken": false,
-      "baseline_pass_count": 18,
-      "after_pass_count": 18
+      "baseline_pass_count": 20,
+      "after_pass_count": 21
     },
     "error": null
   },
   {
     "run": 2,
     "completed": true,
-    "turns": 6,
-    "elapsed": 40.6,
-    "total_tokens": 10555,
-    "prompt_tokens": 9900,
-    "completion_tokens": 655,
+    "turns": 10,
+    "elapsed": 51.5,
+    "total_tokens": 30705,
+    "prompt_tokens": 28779,
+    "completion_tokens": 1926,
     "frr": {
       "frr": 0.0,
       "regressed_tests": [],
@@ -36,19 +36,19 @@
       "new_tests_passed": [],
       "new_tests_failed": [],
       "code_broken": false,
-      "baseline_pass_count": 18,
-      "after_pass_count": 18
+      "baseline_pass_count": 20,
+      "after_pass_count": 20
     },
     "error": null
   },
   {
     "run": 3,
     "completed": true,
-    "turns": 6,
-    "elapsed": 33.2,
-    "total_tokens": 9246,
-    "prompt_tokens": 8699,
-    "completion_tokens": 547,
+    "turns": 9,
+    "elapsed": 52.4,
+    "total_tokens": 34094,
+    "prompt_tokens": 32003,
+    "completion_tokens": 2091,
     "frr": {
       "frr": 0.0,
       "regressed_tests": [],
@@ -57,8 +57,8 @@
       "new_tests_passed": [],
       "new_tests_failed": [],
       "code_broken": false,
-      "baseline_pass_count": 18,
-      "after_pass_count": 18
+      "baseline_pass_count": 20,
+      "after_pass_count": 23
     },
     "error": null
   }

@@ -4,6 +4,10 @@
 > 配置：3 场景 × 4 模型 × 3 次 = 36 次完整 Agent 循环  
 > 场景：refactor-api / fix-bug-cascade / add-validation  
 > 指标：FRR（质量） / 回合 / 耗时 / Token / 费用
+>
+> **口径说明**：本报告中 GLM 5.2 数据经 OpenRouter 中转调用（非智谱官方 API）。
+> 2026-07-28 起 cli.py 与 run_bench.py 均已切换至官方直连（open.bigmodel.cn + ZHIPU_API_KEY），
+> 后续重跑数据与本报告 GLM 行的成本/耗时口径不完全可比。
 
 ---
 

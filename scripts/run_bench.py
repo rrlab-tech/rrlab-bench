@@ -58,7 +58,7 @@ DEFAULT_MODELS = [
     {"name": "deepseek-v4-pro",   "key_env": "DEEPSEEK_API_KEY",     "url": "https://api.deepseek.com/v1"},
     {"name": "deepseek-v4-flash", "key_env": "DEEPSEEK_API_KEY",     "url": "https://api.deepseek.com/v1"},
     {"name": "kimi-k3",           "key_env": "MOONSHOT_API_KEY",     "url": "https://api.moonshot.cn/v1"},
-    {"name": "glm-5.2",           "key_env": "OPENROUTER_API_KEY",   "url": "https://openrouter.ai/api/v1"},
+    {"name": "glm-5.2",           "key_env": "ZHIPU_API_KEY",       "url": "https://open.bigmodel.cn/api/paas/v4"},
     {"name": "MiniMax-M3",        "key_env": "OPENROUTER_API_KEY",   "url": "https://openrouter.ai/api/v1"},
     {"name": "x-ai/grok-4.5",     "key_env": "OPENROUTER_API_KEY",   "url": "https://openrouter.ai/api/v1"},
     {"name": "anthropic/claude-opus-5",   "key_env": "OPENROUTER_API_KEY", "url": "https://openrouter.ai/api/v1"},

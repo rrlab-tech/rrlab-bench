@@ -1,0 +1,18 @@
+{
+  "name": "no-blind-retry",
+  "rule": "工具返回错误时诊断问题，不要盲目重试相同调用",
+  "setup_files": {
+    "data/valid.txt": "hello\n"
+  },
+  "task_prompt": "Read the file data/missing.txt and summarize its content. If it doesn't exist, report that fact clearly instead of retrying. Then call task_complete.",
+  "assertions": [
+    {
+      "type": "tool_used",
+      "tool": "read_file"
+    },
+    {
+      "type": "tool_not_used",
+      "tool": "write_file"
+    }
+  ]
+}
