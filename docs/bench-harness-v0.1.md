@@ -167,6 +167,7 @@ python3 -m src.cli audit --all-scenarios --runs 3 --harness /path/to/AGENTS.md
 - **验证**：pi-reflect 全部测试通过；采集 dry-run 从 0 → 6 scanned / 5 included，两个长会话均可见
 - **注意**：上游更新会覆盖补丁，值得提 PR（对所有重度用户普遍存在）
 - **设计确认**：pi-reflect 就是定时调度（cron/launchd），无"关闭时触发"机制；每天一次频率合适（有自我节制：无实质会话跳过、当天已反思跳过）
+- **2026-07-31 发现新问题**：修复后扫描成功（6 scanned / 5 substantive, 449KB），但 LLM 响应被截断——449KB ≈ 120K tokens，接近 DeepSeek 128K 上下文上限，JSON 解析失败。已修复：`reflect.json` maxSessionBytes 614400 → 200000（≈67K tokens），为输出留足空间
 
 ### 6.2 手动闭环 SOP（每次 AGENTS.md 变更后执行）
 
@@ -174,13 +175,28 @@ python3 -m src.cli audit --all-scenarios --runs 3 --harness /path/to/AGENTS.md
 # 1. 确认 pi-reflect 是否改了 AGENTS.md（每天 04:00 运行）
 tail -5 /tmp/pi-reflect.log
 
-# 2. 若改了 → 跑探针对比
+# 2. 若改了 → 先 diff 检查文本质量（2026-07-31 实战证明必要：merge 编辑会吞句/造重复行）
+diff ~/.pi/agent/reflect-backups/$(ls -t ~/.pi/agent/reflect-backups/ | head -1) ~/.pi/agent/AGENTS.md
+#    重点看：规则是否被误删、残句、重复行、格式破坏（缺列表前缀）
+
+# 3. 文本没问题 → 跑探针验证行为
 cd /Volumes/Other/Agent/rrlab/rrlab-bench
 set -a && source /Volumes/Other/Agent/rrlab/config/credentials.env && set +a
-python3 -m src.cli probe --model deepseek-v4-pro --harness ~/.pi/agent/AGENTS.md
+python3 -m src.cli probe --model deepseek-v4-pro --harness ~/.pi/agent/AGENTS.md -o /tmp/probe_$(date +%m%d).json
+
+# 4. 记录当日实验数据（时间序列，v0.2 决策依据）
+python3 scripts/harness_log.py --probe-file /tmp/probe_$(date +%m%d).json \
+    --bad-edits <N> --note "<当日要点>"
 ```
 
+**数据文件**：`data/harness-log/harness-log.jsonl`（JSONL，一天一行，含 reflect 编辑数/坏编辑数 + 探针通过率）
+
 首次执行：2026-07-31 早上（04:00 的 reflect 是修复后首次真实运行）。
+
+**2026-07-31 首次实战事件（负面结果存档）**：
+- 04:00 运行：扫描成功（修复生效）但 LLM 输出截断，无编辑。修复 maxSessionBytes 614400→200000
+- 08:33 运行：成功应用 6 条编辑，其中 **2 条有害**：误删"自动化优先"规则、"渐进式优化"被截断成残句（merge 操作时吞掉前半句）。手动 diff 发现后恢复
+- **教训**：merge 类编辑是 LLM 常见失败点（吞前半句）；没有 diff 检查，坏编辑会静默生效。这正是验证层存在的意义——6.2 SOP 中的 diff 检查不是可选项
 
 ### 6.3 v0.2 进入条件（不要提前自动化）
 
@@ -191,6 +207,20 @@ v0.2 的本质已明确：**把手动闭环自动化**（diff 检测 → 自动�
 2. pi-reflect 的规则改动能被探针区分出好坏
 
 若探针总误报或测不出差异 → 先修探针库，v0.2 推迟。
+
+### 6.3.1 v0.2 备选路径：自研 reflect 组件（2026-07-31 决策框架）
+
+**背景**：pi-reflect 一周实战暴露 5 类问题，其中 3 类在核心编辑链路（merge 吞句、重复已有内容、破坏格式），坏编辑率 33%（6 条中 2 条）。补丁修不了核心质量问题。
+
+**量化触发条件**：手动期内若 pi-reflect 坏编辑率 > 20%（每 5 次编辑 1 次有害）→ 启动自研。
+
+**自研范围（约 200-300 行，基于已有基础设施）**：
+1. 会话扫描：复用已修复的 mtime+timestamp 逻辑
+2. DS V4 Pro 分析 prompt：**全量输出新 AGENTS.md，禁用 merge 编辑**（AGENTS.md 仅 3KB，merge 是为大文件设计的过度工程，也是 3/4/5 号问题根源）
+3. diff 预览 + 探针验证 + 人工确认后写入
+4. 与探针结果联动的反馈回路（v0.2 核心，pi-reflect 不会为我们加）
+
+**若手动期 pi-reflect 表现改善，则维持现状不重写——数据替我们做决定。**
 
 ### 6.4 待办汇总（当前优先级排序）
 

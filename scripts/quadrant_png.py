@@ -23,7 +23,7 @@ plt.rcParams['axes.unicode_minus'] = False
 MODELS = [
     ('deepseek-v4-pro', 'DS Pro', 3, 6),
     ('deepseek-v4-flash', 'DS Flash', 1, 2),
-    ('kimi-k3', 'Kimi K3', 20, 100),
+    ('kimi-k3', 'K3 (low)', 20, 100),
     ('glm-5.2', 'GLM 5.2', 7, 22),
     ('MiniMax-M3', 'MiniMax M3', 2.18, 8.7),
     ('x-ai/grok-4.5', 'Grok 4.5', 14.5, 43.5),
@@ -74,13 +74,32 @@ for suffix, label in [('', 'Opus5-Medium'), ('_max', 'Opus5-MAX')]:
     if all_t:
         rows.append((label, med(all_t), med(all_e), med(all_tok), med(all_pt), med(all_ct), 36.25, 181.25))
 
+# Kimi K3 thinking=max（归档数据，用于对比）
+ARCHIVE_DIR = DATA_DIR / 'archive-20260726-openrouter'
+all_t,all_e,all_tok,all_pt,all_ct = [],[],[],[],[]
+for s in SCENARIOS:
+    f = ARCHIVE_DIR / f"{s}_kimi-k3.json"
+    try:
+        d = json.loads(f.read_text())
+        results = d if isinstance(d,list) else d.get('results',[])
+        valid = [r for r in results if r and r.get('error') is None]
+        if valid:
+            all_t += [r['turns'] for r in valid]
+            all_e += [r['elapsed'] for r in valid]
+            all_tok += [r['total_tokens'] for r in valid]
+            all_pt += [r.get('prompt_tokens',0) for r in valid]
+            all_ct += [r.get('completion_tokens',0) for r in valid]
+    except: pass
+if all_t:
+    rows.append(('K3 (max)', med(all_t), med(all_e), med(all_tok), med(all_pt), med(all_ct), 20, 100))
+
 data = []
 for label,tm,em,tkm,pm,cm,pi,po in rows:
     data.append({'label':label,'turns':tm,'time':em,'tokens':tkm,
                  'cost':pm/1e6*pi + cm/1e6*po,
                  'tpt':tkm/tm, 'ept':em/tm})
 
-colors = ['#2ecc71','#3498db','#9b59b6','#e74c3c','#f39c12','#00bcd4','#ff6f00','#607d8b','#795548']
+colors = ['#2ecc71','#3498db','#9b59b6','#e74c3c','#f39c12','#00bcd4','#ff6f00','#607d8b','#795548','#9b59b6']
 
 # ═══════ 图 1: 费用 × 速度 象限图 ═══════
 fig, ax = plt.subplots(figsize=(10, 8))
@@ -107,6 +126,13 @@ for i, d in enumerate(data):
     ax.annotate(f"{d['label']}\n¥{d['cost']:.2f} {d['time']:.0f}s",
                 (d['cost'], d['time']), textcoords="offset points", xytext=(10, offset_y),
                 fontsize=9, fontweight='bold')
+
+# K3 max → low 迁移箭头
+k3_max = next((d for d in data if d['label'] == 'K3 (max)'), None)
+k3_low = next((d for d in data if d['label'] == 'K3 (low)'), None)
+if k3_max and k3_low:
+    ax.annotate('', xy=(k3_low['cost'], k3_low['time']), xytext=(k3_max['cost'], k3_max['time']),
+                arrowprops=dict(arrowstyle='->', color='#9b59b6', lw=2.5, linestyle='--'))
 
 # 图例: 气泡大小 = Token
 legend_labels = ['20K', '50K', '100K', '200K']
@@ -150,30 +176,31 @@ print(f"✅ {OUT_DIR / 'quadrant_cost_turns.png'}")
 # ═══════ 图 3: 综合排名横向条形图 ═══════
 fig, ax = plt.subplots(figsize=(10, 7))
 
-# 计算综合分
-best_cost = min(d['cost'] for d in data)
-best_time = min(d['time'] for d in data)
-best_turns = min(d['turns'] for d in data)
-best_tokens = min(d['tokens'] for d in data)
-
+# 计算综合分（与 FINAL_RANKING.md 同口径：回合×0.4 + Token/1000×0.3 + 耗时×0.3，越低越好）
 scored = []
 for d in data:
-    s = best_cost/d['cost']*0.30 + best_time/d['time']*0.30 + best_turns/d['turns']*0.20 + best_tokens/d['tokens']*0.20
+    s = d['turns']*0.4 + d['tokens']/1000*0.3 + d['time']*0.3
     scored.append((d['label'], s))
 
-scored.sort(key=lambda x: x[1])
+scored.sort(key=lambda x: -x[1])  # 差分在上，好分在下
 labels = [s[0] for s in scored]
 scores = [s[1] for s in scored]
-bar_colors = ['#2ecc71','#2ecc71','#2ecc71','#f39c12','#f39c12','#e74c3c','#e74c3c','#e74c3c','#e74c3c']
+n = len(scored)
+bar_colors = []
+for i in range(n):
+    rank = n - i  # 底部是第 1 名
+    if rank <= 3: bar_colors.append('#2ecc71')
+    elif rank <= 6: bar_colors.append('#f39c12')
+    else: bar_colors.append('#e74c3c')
 
 ax.barh(labels, scores, color=bar_colors, height=0.6)
-ax.set_xlabel('综合得分 (费用30% + 速度30% + 回合20% + Token20%)', fontsize=11)
-ax.set_title('RRLabBench — 综合排名', fontsize=14, fontweight='bold')
+ax.set_xlabel('综合效率分 (回合×0.4 + Token/1000×0.3 + 耗时×0.3，越低越好)', fontsize=11)
+ax.set_title('RRLabBench — 综合排名（顶部为第 1 名）', fontsize=14, fontweight='bold')
 
 for i, (label, score) in enumerate(scored):
-    ax.text(score + 0.01, i, f'{score:.3f}', va='center', fontweight='bold')
+    ax.text(score + 0.3, i, f'{score:.1f}', va='center', fontweight='bold')
 
-ax.set_xlim(0, max(scores) * 1.15)
+ax.set_xlim(0, max(scores) * 1.12)
 ax.grid(True, axis='x', alpha=0.2)
 plt.tight_layout()
 plt.savefig(OUT_DIR / 'ranking.png', dpi=150, bbox_inches='tight')
