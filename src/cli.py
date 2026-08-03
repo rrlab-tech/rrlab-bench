@@ -459,7 +459,7 @@ Environment variables:
     ap.add_argument("--scenario", default="refactor-api",
                     help=f"Scenario: {', '.join(SCENARIOS)}")
     ap.add_argument("--all-scenarios", action="store_true", help="Run all scenarios")
-    ap.add_argument("--model", default="kimi-k3", help="Model ID")
+    ap.add_argument("--model", default="deepseek-v4-pro", help="Model ID")
     ap.add_argument("--api-key", help="API key (optional, reads from env)")
     ap.add_argument("--base-url", help="API base URL (auto-detected)")
     ap.add_argument("--runs", type=int, default=5, help="Repeat count (default: 5)")
@@ -478,7 +478,7 @@ Environment variables:
     rp.add_argument("--scenario", default="refactor-api",
                     help=f"Scenario: {', '.join(SCENARIOS)}")
     rp.add_argument("--all-scenarios", action="store_true", help="Run all scenarios")
-    rp.add_argument("--model", default="kimi-k3", help="Model ID")
+    rp.add_argument("--model", default="deepseek-v4-pro", help="Model ID")
     rp.add_argument("--api-key", help="API key")
     rp.add_argument("--base-url", help="API base URL")
     rp.add_argument("--runs", type=int, default=3, help="Repeat count (default: 3)")
@@ -489,7 +489,7 @@ Environment variables:
     pp = subparsers.add_parser("probe", help="Run harness rule probes (Bench-Harness v0.1)")
     pp.add_argument("--probe", help="Single probe JSON file (default: all in probes/)")
     pp.add_argument("--probes-dir", default="probes", help="Probes directory (default: probes/)")
-    pp.add_argument("--model", default="kimi-k3", help="Model ID")
+    pp.add_argument("--model", default="deepseek-v4-flash", help="Model ID")
     pp.add_argument("--api-key", help="API key")
     pp.add_argument("--base-url", help="API base URL")
     pp.add_argument("--harness", help="Harness rules file (e.g. AGENTS.md) — omit for baseline")
