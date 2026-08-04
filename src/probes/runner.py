@@ -124,8 +124,16 @@ def check_assertion(assertion: dict, call_log: list[dict], work_dir: Path) -> tu
         ok = assertion["substring"] in content
         return ok, f"substring {'found' if ok else 'NOT found'} in {assertion['path']}"
 
+    if atype == "file_not_contains":
+        p = work_dir / assertion["path"]
+        if not p.exists():
+            return False, f"{assertion['path']} does not exist"
+        content = p.read_text(encoding="utf-8", errors="replace")
+        ok = assertion["substring"] not in content
+        return ok, f"substring {'found (FAIL)' if not ok else 'NOT found'} in {assertion['path']}"
+
     valid = ["tool_before", "tool_after", "tool_after_any", "tool_used", "tool_not_used",
-             "tool_count", "tool_arg_contains", "file_contains"]
+             "tool_count", "tool_arg_contains", "file_contains", "file_not_contains"]
     return False, f"unknown assertion type: {atype} (valid: {', '.join(valid)})"
 
 

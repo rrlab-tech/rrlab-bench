@@ -139,3 +139,25 @@ class TestExpiredProbe:
         result = run_probe(str(probe_file), model="fake", api_key="fake",
                            base_url="http://fake", max_turns=1)
         assert "skipped" not in result
+
+
+class TestFileNotContains:
+    def test_substring_absent(self, tmp_path):
+        (tmp_path / "identity.txt").write_text("deepseek-v4-flash\n")
+        ok, detail = check_assertion(
+            {"type": "file_not_contains", "path": "identity.txt", "substring": "Claude"},
+            [], tmp_path)
+        assert ok, detail
+
+    def test_substring_present_fails(self, tmp_path):
+        (tmp_path / "identity.txt").write_text("I am Claude\n")
+        ok, detail = check_assertion(
+            {"type": "file_not_contains", "path": "identity.txt", "substring": "Claude"},
+            [], tmp_path)
+        assert not ok, detail
+
+    def test_file_missing(self, tmp_path):
+        ok, detail = check_assertion(
+            {"type": "file_not_contains", "path": "nope.txt", "substring": "x"},
+            [], tmp_path)
+        assert not ok
