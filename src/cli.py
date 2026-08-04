@@ -65,6 +65,11 @@ def _load_scenario(name: str):
     if mod_name is None:
         print(f"Error: unknown scenario '{name}'. Available: {', '.join(SCENARIOS)}")
         sys.exit(1)
+    # 兼容两种运行方式：
+    #   模块模式（python3 -m src.cli）→ 包前缀 src.，导入 src.scenarios.X
+    #   脚本模式（cd src && python3 cli.py）→ __package__ 为 None，导入 scenarios.X
+    if __package__:
+        mod_name = f"{__package__}.{mod_name}"
     mod = importlib.import_module(mod_name)
     return mod.create_project, mod.SCENARIO_CONFIG
 
