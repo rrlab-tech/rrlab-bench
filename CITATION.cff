@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Rui
+    given-names: Rodney
+    orcid: "https://orcid.org/0009-0004-3898-4655"
+title: "RRLabBench: Agent capability audit framework"
+version: 0.3.0
+date-released: "2026-08-04"
+license: Apache-2.0
+url: "https://github.com/rrlab-tech/rrlab-bench"
+abstract: "Agent capability audit framework measuring real-world coding capability of LLM agents with functional regression risk (FRR), test integrity, and cost efficiency."
