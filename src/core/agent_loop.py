@@ -23,6 +23,7 @@ def run_agent_loop(
     max_turns: int = 20,
     temperature: float = 0.7,
     timeout: int = 300,
+    system_prompt: str | None = None,
     harness_text: str | None = None,
 ) -> dict:
     """
@@ -60,13 +61,14 @@ def run_agent_loop(
 
     tools = executor.tool_definitions()
 
-    system_prompt = (
-        "You are a coding agent working in a project directory. "
-        "Use the provided tools to explore, modify, and verify code. "
-        "Work methodically: read files before editing them, verify changes after making them. "
-        "Call task_complete ONLY when you are confident the task is fully done. "
-        "If a tool returns an error, diagnose the problem — do NOT guess and retry blindly."
-    )
+    if system_prompt is None:
+        system_prompt = (
+            "You are a coding agent working in a project directory. "
+            "Use the provided tools to explore, modify, and verify code. "
+            "Work methodically: read files before editing them, verify changes after making them. "
+            "Call task_complete ONLY when you are confident the task is fully done. "
+            "If a tool returns an error, diagnose the problem — do NOT guess and retry blindly."
+        )
     # Bench-Harness v0.1: 注入外部 harness 规则（如 AGENTS.md），
     # 使 RRLabBench 可以测量 harness 改动对 agent 行为的影响
     if harness_text:
